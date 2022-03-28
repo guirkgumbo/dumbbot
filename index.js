@@ -36,9 +36,11 @@ const denormalise = (amount) => {
   return new BigNumber(amount).div(new BigNumber(10).pow(18));
 };
 
+let primer = 0.13;
+
 async function main() {
   // magic number cause small even numbers seem to be the best outcome from the getY function
-  const magicNumber = normalise("0.06").toFixed(0);
+  const magicNumber = normalise(primer.toString()).toFixed(0);
   const y = await ContDutchAuction.getY(magicNumber);
   console.log("The potential y is: " + denormalise(y._hex).toFixed(4));
   const readableY = denormalise(y._hex).toFixed(4);
@@ -50,8 +52,8 @@ async function main() {
       console.log("gas price: ", gasPrice.toString()); //returns the price of gas from the network
       // TODO: find a way to get the current gasLimit if the network
       const swap = await ContDutchAuction.swap(magicNumber, y, {
-        gasPrice: gasPrice.add(gasPrice.div(10)),
-        gasLimit: 210000,
+        gasPrice: gasPrice.add(gasPrice.div(35)),
+        gasLimit: 220000,
       });
       console.log("Swap results!");
       console.log(swap);
@@ -63,7 +65,11 @@ async function main() {
 }
 
 // Cron scheduler cause setInterval is dumb
-cron.schedule("* * * * *", () => {
+cron.schedule("*/30 * * * * *", () => {
   console.log("running a task every minute");
+  primer = primer + 0.0001;
+  if (primer > 0.2) {
+    primer = 0.13;
+  }
   main();
 });
